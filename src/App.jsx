@@ -1,52 +1,54 @@
-import { World, Cube, Model, OrbitCamera, useLoop, Skybox } from "lingo3d-react"
-import { useState, useRef } from "react"
-
+/*
+ * @Description: 
+ * @Author: wanghexing
+ * @Date: 2023-02-28 13:10:52
+ * @LastEditors: wanghexing
+ * @LastEditTime: 2023-02-28 16:49:43
+ */
+import { World, Skybox, Model, ThirdPersonCamera, useKeyboard, useLoop } from "lingo3d-react"
+import { useRef } from "react"
 function App() {
-  let [position, setPosition] = useState({ x: 0, y: 0, z: 0 })
-  let [walking, setWalking] = useState(false)
-  let modelRef = useRef()
+  const key = useKeyboard()
+  const characterRef = useRef()
+  const keyWalk = ['w', 'Meta w']
+  const keyArr = ['w', 'w Space', 'Meta w', 'Meta w Space']
+  const movtion = keyWalk.includes(key) ? "walking" : key.includes('Space') ? "flip" : "idle"
+  const sceneURL = "Grassland.glb"
+  const moduleURL = {
+    atm: {
+      default: 'dijia/atm.fbx',
+      idle: "dijia/atm_idle.fbx",
+      walking: "dijia/atm_walk.fbx",
+      flip: "dijia/atm_flip.fbx"
+    },
+    fox: {
+      default: 'Fox.fbx',
+      idle: "Idle.fbx",
+      walking: "Walking.fbx"
 
-  let handleClick = (ev) => {
-    ev.point.y = 0
-    setPosition(ev.point)
-    setWalking(true)
-
-    let model = modelRef.current
-    console.log('sss', model)
-
-    model.lookAt(ev.point)
+    }
   }
 
-  let handleIntersect = () => {
-    setWalking(false)
-  }
-
+  console.log(key.includes(keyWalk));
   useLoop(() => {
-    let model = modelRef.current
-    model.moveForward(-1)
-
-  }, walking)
-
+    characterRef.current.moveForward(-3)
+  }, keyArr.includes(key))
+  useLoop(() => {
+    characterRef.current.moveForward(0)
+  }, key === 'Space')
   return (
     <World>
-      <Skybox texture="Cosmos.webp" />
-      <Cube width={9999} depth={9999} y={-100}  onClick={handleClick} texture='gr.webp' textureRepeat={50}/>
-      <Model
-        // scaleX={1.5}
-        // scaleY={1.5}
-        // scaleZ={1.5}
-        // x={0}
-        // y={100}
-        // z={0}
-        ref={modelRef}
-        src="./dijia/atm.fbx"
-        animations={{ idle: "./dijia/Warrior Idle.fbx", walking: "./dijia/Walking With Shopping Bag.fbx" }}
-        animation={walking ? "walking" : "idle"}
-        intersectIDs={["orangeBox"]}
-        onIntersect={handleIntersect}
-      />
-      <OrbitCamera active z={300} />
-      <Cube id="orangeBox" scale={0.5} color="orange" x={position.x} y={position.y} z={position.z} visible={false} />
+      <Model src={sceneURL} scale={270} physics="map" />
+      <ThirdPersonCamera active mouseControl>
+        <Model
+          ref={characterRef}
+          src={moduleURL.atm.default}
+          physics="character"
+          animations={{ idle: moduleURL.atm.idle, walking: moduleURL.atm.walking, flip: moduleURL.atm.flip }}
+          animation={movtion}
+        />
+      </ThirdPersonCamera>
+      <Skybox texture="skybox.jpg" />
     </World>
   )
 }
